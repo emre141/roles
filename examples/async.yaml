@@ -1,0 +1,8 @@
+- name: Long running task
+  hosts: demoservers
+  remote_user: devops
+  tasks:
+    - name: Download big file
+      get_url: url=http://demo.example.com/bigfile.tar.gz
+      async: 3600  # Time second wait tast complete
+      poll: 10   # Ansible check hosts every 10 second to see if download is complete

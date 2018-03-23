@@ -1,0 +1,78 @@
+- name: Prepera Host Inventory
+  hosts: nodes
+  vars:
+   local_docker: "workstation.lab.example.com:5000"
+  remote_user: root
+  tasks:
+- name: Create /root/.ssh
+  file:
+    path: /root/.ssh
+    mode: 0700
+    owner: root
+    group: root
+    state: directory
+  when: inventory_hostname in groups['masters']
+- name: Copy lab_rsa to /root/.ssh/id_rsa
+  copy:
+    src: /home/student/.ssh/lab_rsa
+    dest: /root/.ssh/id_rsa
+    mode: 0600
+    owner: root
+    group: root
+    force: no
+  when: inventory_hostname in groups['masters']
+- name: Copy lab_rsa.pub to /root/.ssh/id_rsa.pub
+  copy:
+    src: /home/student/.ssh/lab_rsa.pub
+    dest: /root/.ssh/id_rsa.pub
+    mode: 0644
+    owner: root
+    group: root
+    force: no
+  when: inventory_hostname in groups['masters']
+- name: Deploy ssh key to root at all nodes
+  authorized_key:
+  user: root
+  key: "{{ lookup('file', '/home/student/.ssh/lab_rsa.pub') }}"
+- name: Install docker
+  yum:
+    name: docker
+    state: latest
+- name: Customize /etc/sysconfig/docker-storage-setup
+  copy:
+    src: files/docker-storage-setup
+    dest: /etc/sysconfig/docker-storage-setup
+- name: Verify existence of /dev/docker-vg/docker-pool
+  stat:
+    path: /dev/docker-vg/docker-pool
+  register: docker_vg_status
+- name: Run docker-storage-setup
+  command: /usr/bin/docker-storage-setup
+  when: docker_vg_status.stat.islnk is not defined
+- name: Start and enable docker
+  service:
+    name: docker
+    state: started
+    enabled: true
+- name: Install required packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+  - wget
+  - git
+  - net-tools
+  - bind-utils
+  - iptables-services
+  - bridge-utils
+  - bash-completion
+  - kexec-tools
+  - sos
+  - psacct
+  - atomic-openshift-docker-excluder
+  - atomic-openshift-excluder
+- name: Install OpenShift tools
+  yum:
+- name: atomic-openshift-utils
+  state: latest
+  when: inventory_hostname in groups['masters']

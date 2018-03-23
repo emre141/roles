@@ -1,0 +1,16 @@
+---
+- hosts: all
+  #connection: local
+  roles:
+    - users
+  vars:
+    users_current:
+      - username: 'emre'
+        name: 'Emre Admin'
+        groups: ['root']
+        password: ''
+        authorized: []
+
+    users_group_list:
+      - admin
+

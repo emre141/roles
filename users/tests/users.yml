@@ -1,0 +1,15 @@
+---
+- hosts: all
+  connection: local
+  roles:
+    - users
+  vars:
+    users_current:
+      - username: 'sa'
+        name: 'Test Admin'
+        groups: ['admin']
+        password: ''
+        authorized: []
+
+    users_group_list:
+      - admin

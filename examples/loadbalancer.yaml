@@ -1,0 +1,14 @@
+---
+  - hosts: webservers
+    tasks:
+    - name: Remove server from load balancer
+      command: remove-from-lb {{ inventory_hostname }}
+      delegate_to: localhost
+  
+    - name: deploy the latest version of webstack
+        git:repo=git://foosball.example.org/path/to/repo.git dest=/srv/checkout
+  
+    - name: Add server to load balancer pool
+      command: add-to-lb {{ inventory_hostname }}
+      delegate_to: localhost
+  

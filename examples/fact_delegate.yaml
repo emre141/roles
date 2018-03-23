@@ -1,0 +1,8 @@
+- hosts: app_servers
+  tasks:
+  - name: gather facts from app servers
+    setup:
+    delegate_to: "{{item}}"
+    with_items: "{{groups['lb_servers']}}"
+
+  - debug: var=ansible_eth0['ipv4']['address']

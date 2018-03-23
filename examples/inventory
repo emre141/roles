@@ -1,0 +1,4 @@
+[app_servers]
+demo.lab.example.com
+[lb_servers]
+workstation.lab.example.com

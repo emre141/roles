@@ -1,0 +1,8 @@
+[workstations]
+workstation.example.com
+[masters]
+master.example.com
+[nodes]
+master.example.com
+node1.example.com
+node2.example.com

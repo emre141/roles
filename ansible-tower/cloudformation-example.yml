@@ -1,0 +1,16 @@
+- name: provision stack
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+# Basic task example
+  tasks:
+  - name: launch ansible cloudformation example
+    cloudformation: >
+      stack_name="{{ stack_name }}" state=present
+      region=us-east-1 disable_rollback=true
+      template=files/vpc_single_instance_in_subnet.template.json
+    args:
+      template_parameters:
+        KeyName: amazondefaultami
+    register: stack

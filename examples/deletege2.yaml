@@ -1,0 +1,15 @@
+  - name: local_action example
+    hosts: dev
+    tasks:
+    - name: remote running process
+      command: ps
+      register: remote_process
+  
+    - debug: msg="{{ remote_process.stdout }} "
+  
+    - name: Running Local Process
+      local_action: command 'ps'
+      register: local_process
+  
+    - debug:
+        msg: "{{ local_process.stdout }}"

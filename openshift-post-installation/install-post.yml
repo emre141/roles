@@ -1,0 +1,106 @@
+- name: "Guide Exercise : Complete the Post Installation Task"
+  hosts: nodes
+  remote_user: root
+  vars:
+    passwd_file: /etc/origin/openshift-passwd
+    users:
+      - name: developer
+      - password: openshift
+      - name: admin
+      - password: redhat
+  tasks:
+  - name: Check for OCP Service
+    service: 
+      name: atomic-openshift-master
+      state: started
+      enable: true
+    when: inventory_hostname in groups['masters']
+
+
+  - name: Re-add Openshift Package Exclusions
+    command: "/usr/bin/atomic-openshift-excluder exclude"
+
+  - name: Fix registry console
+    command: "oc set image --source=docker dc/registry-console registry-console=workstation.lab.example.com:5000/openshift3/registry-console:3.5"
+    when: inventory_hostname in groups['masters']
+
+  - name: Wait for registry console to redeploy
+    pause:
+      seconds: 15
+      prompt: "Waiting for the registry console redploy"
+
+  
+  - name: Edit RHEL7 Image Streams
+    copy:
+      src: files/image-streams-rhel7.json
+      dest: /usr/share/openshift/examples/image-streams/image-streams-rhel7.json
+    register: rhel7_is_result
+    when: inventory_hostname in groups['masters']
+
+  - name: Delete Openshift IS
+    command: "/usr/bin/oc delete is -n openshift --all"
+    when: rhel7_is_result.changed and inventory_hostname in groups['masters']
+  - name: Create RHEL7 IS
+    command: "/usr/bin/oc create -f /usr/share/openshift/examples/image-streams/image-stream-rhel7.json -n openshift"
+    when: rhe7_is_result.changed and inventory_hostname in groups['masters']
+
+    
+  - name: Install httpd-tools
+    yum:
+      name: httpd-tools
+      state: latest
+    when: inventory_hostname in groups['masters']
+  
+  - name: Add path to the password file for HTPasswdPasswordIdentityProvieder
+    linefile:
+      dest: /etc/origin/master/master-config.yaml
+      backup: "yes"
+      line: '     file: "/etc/origin/openshift-passwd"'
+      insertbefore: 'kind: DenyAllPasswordIdentityProvider'
+    when: inventory_hostname in groups['masters']
+    register: master_config_file_path_result
+
+  - name: Change master-config.yaml to use HTPasswdPasswordIdentityProvieder
+    linefile:
+      dest: /etc/origin/master/master-config.yaml
+      backup: "yes"
+      regexp:'kind: DenyAllPasswordIdentityProvider'
+      line: '       kind:HTPasswdPasswordIdentityProvider'
+    when: inventory_hostname in groups['masters'] and master_config_file_path_result.changed
+    register: master_config_file_provider_result
+
+  - name: Allow oc and web access for users
+    htpasswd:
+      path: "{{ passwd_file }}"
+      name: "{{ item.name }}"
+      password: "{{ item.password }}"
+    with_items: " {{ users }}"
+    when: inventory_hostname in groups['masters']
+
+  - name: Restart Openshift Master Services to apply authentication changes
+    service:
+      name: atomic-openshift-master
+      state: restarted
+    when: inventory_hostname in groups['masters'] and master_config_file_provider_result.changed
+  
+  - name: Waiting for Master to restart
+    pause:
+      second: 10
+      prompt: "Wait for master to settle"
+  - name: Give admin user proper permission
+    command: "oc adm policy add-cluster-role-to-user cluster-admin admin"
+    when: inventory_hostname in groups['masters']
+
+  - name: "Completing to post installation task"
+    hosts: workstations
+    remote_user: root
+    tasks:
+    - name: Install atomic-openshift-clients
+      yum:
+        name: atomic-openshift-clients
+        state: latest
+         
+
+
+
+

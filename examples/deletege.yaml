@@ -1,0 +1,16 @@
+- name: delegate_to:localhost example
+  hosts: dev
+  tasks:
+  - name: remote running process
+    command: ps
+    register: remote_process
+
+  - debug: msg="{{ remote_process.stdout }}"
+
+  - name: Running Local Process
+    command: ps
+    delegate_to: localhost
+    register: local_process
+
+  - debug:
+      msg: "{{ local_process.stdout }}"

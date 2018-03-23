@@ -1,0 +1,9 @@
+---
+users_current: []
+users_retired: []
+users_keys: []
+users_group_list: []
+users_default_shell: '/bin/bash'
+users_default_group: 'users'
+users_create_group_per_user: true
+users_create_homedir: true

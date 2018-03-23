@@ -1,0 +1,9 @@
+- name: test play
+  hosts: localhost
+  tasks:
+
+  - name: add delegation host
+    add_host: name=demo ansible_host=172.25.250.10 ansible_user=devops
+  - name: silly echo
+    command: echo {{ inventory_hostname }}
+    delegate_to: demo
